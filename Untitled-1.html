@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register</title>
+  <link rel="stylesheet" href="body.css" />
+</head>
+<body>
+  <div class="container">
+    <form class="register-form">
+      <div class="photo-upload">
+        <div class="upload-icon">&#8682;</div>
+        <p class="photo-text">Choose Photo</p>
+        <p class="photo-subtext">Optional: Add a profile picture</p>
+      </div>
+
+      <input type="text" placeholder="Choose your username" required />
+      <input type="email" placeholder="Enter your email address" required />
+      <input type="password" placeholder="Create password (min. 8 characters)" required minlength="8" />
+      <input type="password" placeholder="Confirm your password" required minlength="8" />
+
+      <label class="terms">
+        <input type="checkbox" required />
+        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+      </label>
+
+      <button type="submit">Create Account</button>
+
+      <p class="login-link">Already have an account? <a href="#">Login here</a></p>
+    </form>
+  </div>
+</body>
+</html>
