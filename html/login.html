@@ -4,15 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Register</title>
-  <link rel="stylesheet" href="body.css" />
+  <link rel="stylesheet" href="../css/body.css" />
+  <style>
+    .preview-img {
+      max-width: 120px;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <form class="register-form">
+    <form class="register-form" enctype="multipart/form-data">
       <div class="photo-upload">
-        <div class="upload-icon">&#8682;</div>
+        <label for="photo-upload-input" class="upload-icon" style="cursor: pointer;">&#8682;</label>
+        <input type="file" id="photo-upload-input" name="profile-photo" accept="image/*" style="display: none;" />
         <p class="photo-text">Choose Photo</p>
         <p class="photo-subtext">Optional: Add a profile picture</p>
+        <img id="preview" class="preview-img" />
       </div>
 
       <input type="text" placeholder="Choose your username" required />
@@ -30,5 +39,22 @@
       <p class="login-link">Already have an account? <a href="#">Login here</a></p>
     </form>
   </div>
+
+  <script>
+    const input = document.getElementById('photo-upload-input');
+    const preview = document.getElementById('preview');
+
+    input.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
 </body>
 </html>
