@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Account | MusicTalk</title>
+  <link rel="stylesheet" href="../css/register.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Create Your MusicTalk Account</h2>
+    <form action="#" method="POST">
+      <input type="text" name="fullname" placeholder="Full Name" required>
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="email" name="email" placeholder="Email Address" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+
+      <select name="genre">
+        <option value="">Favorite Music Genre (Optional)</option>
+        <option value="rock">Rock</option>
+        <option value="pop">Pop</option>
+        <option value="hiphop">Hip-Hop & R&B</option>
+        <option value="electronic">Electronic</option>
+        <option value="classical">Classical</option>
+        <option value="jazz">Jazz</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label class="checkbox">
+        <input type="checkbox" required> I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+      </label>
+
+      <button type="submit">Create Account</button>
+    </form>
+    <p class="signin-link">Already have an account? <a href="#">Sign In</a></p>
+  </div>
+</body>
+</html>
