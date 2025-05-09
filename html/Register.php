@@ -1,3 +1,54 @@
+<?php
+session_start();
+require_once __DIR__ . '/../includes/database.php';
+
+// Initialize variables
+$errors = [];
+$formData = [
+    'fullname' => '',
+    'username' => '',
+    'email' => '',
+    'genre' => ''
+];
+
+// Process form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST["submit"])) {
+    // Sanitize and store form data
+    $formData = [
+        'fullname' => htmlspecialchars(trim($_POST["fullname"])),
+        'username' => htmlspecialchars(trim($_POST["username"])),
+        'email' => htmlspecialchars(trim($_POST["email"])),
+        'genre' => htmlspecialchars(trim($_POST["genre"]))
+    ];
+    
+    $password = $_POST["password"];
+    $confirm_password = $_POST["confirm_password"];
+
+    // Validation (same as before)
+    // ... [keep all your validation code from previous example]
+
+    // If no errors, proceed with registration
+    if (empty($errors)) {
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        
+       // Replace your current insert code with this prepared statement:
+$stmt = $conn->prepare("INSERT INTO users (full_name, user_name, email, password, favorite_music_genre) VALUES (?, ?, ?, ?, ?)");
+$stmt->bind_param("sssss", $formData['fullname'], $formData['username'], $formData['email'], $passwordHash, $formData['genre']);
+
+if ($stmt->execute()) {
+    $_SESSION['registration_success'] = true;
+    header("Location: login.php");
+    exit();
+} else {
+    $errors[] = "Registration failed: " . $conn->error;
+}
+$stmt->close();
+    }
+}
+
+// The HTML part starts here
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +63,8 @@
       --accent-color: #e43f5a;
       --text-color: #f1f1f1;
       --text-secondary: #b8b8b8;
+      --error-color: #ff4444;
+      --success-color: #00C851;
     }
 
     * {
@@ -32,7 +85,6 @@
       overflow: hidden;
     }
 
-    /* Animated background elements */
     .music-note {
       position: absolute;
       color: rgba(228, 63, 90, 0.1);
@@ -80,6 +132,25 @@
       color: var(--text-secondary);
       margin-bottom: 2rem;
       font-size: 0.95rem;
+    }
+
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .alert-danger {
+      background-color: rgba(255, 68, 68, 0.2);
+      border-left: 4px solid var(--error-color);
+      color: var(--text-color);
+    }
+
+    .alert-success {
+      background-color: rgba(0, 200, 81, 0.2);
+      border-left: 4px solid var(--success-color);
+      color: var(--text-color);
     }
 
     .input-group {
@@ -171,6 +242,7 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 15px rgba(228, 63, 90, 0.3);
       width: 100%;
+      position: relative;
     }
 
     .register-btn:hover {
@@ -196,7 +268,6 @@
       opacity: 0.8;
     }
 
-    /* Password strength meter */
     .password-strength {
       height: 4px;
       background: rgba(27, 27, 47, 0.5);
@@ -213,7 +284,15 @@
       transition: width 0.3s ease, background 0.3s ease;
     }
 
-    /* Responsive design */
+    .toggle-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-color);
+      cursor: pointer;
+    }
+
     @media (max-width: 480px) {
       .form-container {
         padding: 2rem 1.5rem;
@@ -225,7 +304,6 @@
       }
     }
 
-    /* Animation for form elements */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -261,29 +339,43 @@
   <i class="music-note fas fa-music" style="top: 60%; left: 25%; animation-delay: 2.5s;"></i>
   <i class="music-note fas fa-music" style="top: 30%; left: 70%; animation-delay: 1.8s;"></i>
 
-  <div class="form-container">
+   <div class="form-container">
     <h2>Join Drop The Beat</h2>
     <p class="subtitle">Create your account to start your musical journey</p>
 
-    <form action="#" method="POST">
+    <!-- Error messages -->
+    <?php if (!empty($errors)): ?>
+      <div id="error-container">
+        <?php foreach ($errors as $error): ?>
+          <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+    <form action="Register.php" method="POST">
+      <!-- Form fields with PHP values -->
       <div class="input-group">
         <i class="fas fa-user"></i>
-        <input type="text" name="fullname" placeholder="Full Name" required>
+        <input type="text" name="fullname" placeholder="Full Name" required 
+               value="<?= htmlspecialchars($formData['fullname']) ?>">
       </div>
 
       <div class="input-group">
         <i class="fas fa-at"></i>
-        <input type="text" name="username" placeholder="Username" required>
+        <input type="text" name="username" placeholder="Username" required
+               value="<?php echo isset($_SESSION['formData']['username']) ? htmlspecialchars($_SESSION['formData']['username']) : ''; ?>">
       </div>
 
       <div class="input-group">
         <i class="fas fa-envelope"></i>
-        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="email" name="email" placeholder="Email Address" required
+               value="<?php echo isset($_SESSION['formData']['email']) ? htmlspecialchars($_SESSION['formData']['email']) : ''; ?>">
       </div>
 
       <div class="input-group">
         <i class="fas fa-lock"></i>
         <input type="password" name="password" placeholder="Password" required id="password">
+        <i class="fas fa-eye toggle-password"></i>
         <div class="password-strength">
           <div class="strength-meter" id="strength-meter"></div>
         </div>
@@ -292,19 +384,20 @@
       <div class="input-group">
         <i class="fas fa-lock"></i>
         <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+        <i class="fas fa-eye toggle-password"></i>
       </div>
 
       <div class="input-group">
         <i class="fas fa-music"></i>
-        <select name="genre" id="genre">
-          <option value="">Favorite Music Genre (Optional)</option>
-          <option value="rock">Rock</option>
-          <option value="pop">Pop</option>
-          <option value="hiphop">Hip-Hop & R&B</option>
-          <option value="electronic">Electronic</option>
-          <option value="classical">Classical</option>
-          <option value="jazz">Jazz</option>
-          <option value="other">Other</option>
+        <select name="genre" id="genre" required>
+          <option value="">Favorite Music Genre</option>
+          <option value="rock" <?php echo (isset($_SESSION['formData']['genre']) && $_SESSION['formData']['genre'] === 'rock') ? 'selected' : ''; ?>>Rock</option>
+          <option value="pop" <?php echo (isset($_SESSION['formData']['genre']) && $_SESSION['formData']['genre'] === 'pop') ? 'selected' : ''; ?>>Pop</option>
+          <option value="hiphop" <?php echo (isset($_SESSION['formData']['genre']) && $_SESSION['formData']['genre'] === 'hiphop') ? 'selected' : ''; ?>>Hip-Hop & R&B</option>
+          <option value="electronic" <?php echo (isset($_SESSION['formData']['genre']) && $_SESSION['formData']['genre'] === 'electronic') ? 'selected' : ''; ?>>Electronic</option>
+          <option value="classical" <?php echo (isset($_SESSION['formData']['genre']) && $_SESSION['formData']['genre'] === 'classical') ? 'selected' : ''; ?>>Classical</option>
+          <option value="jazz" <?php echo (isset($_SESSION['formData']['genre']) && $_SESSION['formData']['genre'] === 'jazz') ? 'selected' : ''; ?>>Jazz</option>
+          <option value="other" <?php echo (isset($_SESSION['formData']['genre']) && $_SESSION['formData']['genre'] === 'other') ? 'selected' : ''; ?>>Other</option>
         </select>
         <i class="fas fa-chevron-down select-arrow"></i>
       </div>
@@ -314,36 +407,32 @@
         <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
       </div>
 
-      <button type="submit" class="register-btn">Create Account</button>
+      <button type="submit" name="submit" class="register-btn">
+        <span class="btn-text">Create Account</span>
+      </button>
     </form>
 
     <p class="login-link">Already have an account? <a href="../html/login.html">Sign In</a></p>
   </div>
 
   <script>
-    // Add more floating music notes dynamically
     document.addEventListener('DOMContentLoaded', function() {
+      // Add more floating music notes dynamically
       const body = document.querySelector('body');
-      
-      // Create more music notes
       for (let i = 0; i < 5; i++) {
         const note = document.createElement('i');
         note.className = 'music-note fas fa-music';
-        
-        // Random positioning and animation
         const top = Math.random() * 100;
         const left = Math.random() * 100;
         const delay = Math.random() * 5;
         const duration = 5 + Math.random() * 5;
         const size = 1 + Math.random() * 2;
-        
         note.style.top = `${top}%`;
         note.style.left = `${left}%`;
         note.style.animationDelay = `${delay}s`;
         note.style.animationDuration = `${duration}s`;
         note.style.fontSize = `${size}rem`;
         note.style.opacity = 0.1 + Math.random() * 0.2;
-        
         body.appendChild(note);
       }
 
@@ -355,40 +444,37 @@
         const password = this.value;
         let strength = 0;
         
-        // Check for length
         if (password.length >= 8) strength += 1;
         if (password.length >= 12) strength += 1;
-        
-        // Check for uppercase letters
         if (/[A-Z]/.test(password)) strength += 1;
-        
-        // Check for numbers
         if (/[0-9]/.test(password)) strength += 1;
-        
-        // Check for special characters
         if (/[^A-Za-z0-9]/.test(password)) strength += 1;
         
-        // Update strength meter
         const width = strength * 25;
-        let color = '#e43f5a'; // red
+        let color = '#e43f5a';
         
         if (strength >= 4) {
-          color = '#4CAF50'; // green
+          color = '#4CAF50';
         } else if (strength >= 2) {
-          color = '#FFC107'; // yellow
+          color = '#FFC107';
         }
         
         strengthMeter.style.width = `${width}%`;
         strengthMeter.style.background = color;
       });
 
-      // Form submission handling
-      const registerForm = document.querySelector('form');
-      registerForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        // Add your registration logic here
-        console.log('Registration form submitted');
+      // Toggle password visibility
+      document.querySelectorAll('.toggle-password').forEach(icon => {
+        icon.addEventListener('click', function() {
+          const input = this.previousElementSibling;
+          const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+          input.setAttribute('type', type);
+          this.classList.toggle('fa-eye-slash');
+        });
       });
+
+      // Clear form data from session when page loads
+      <?php unset($_SESSION['formData']); ?>
     });
   </script>
 </body>
